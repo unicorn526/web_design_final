@@ -1,4 +1,4 @@
-const apiKey = '2d4e2b93';
+const apiKey = '2d4e2b93'; // 主要key 2d4e2b93 ;備用key bd7bed2b
 const categories = {
   '首頁': [],
   '科幻': [
