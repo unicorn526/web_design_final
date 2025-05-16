@@ -139,11 +139,12 @@ async function searchMovies(query, page = 1) {
     const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}&page=${page}`);
     const data = await res.json();
     if (data.Response === 'True') {
-      await Promise.all(data.Search.map(async item => {
+      for (const item of data.Search.slice(0, 3)) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // 每半秒請求一次
         const resDetail = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&i=${item.imdbID}&plot=short`);
         const detail = await resDetail.json();
         if (detail.Response === 'True') appendCard(detail);
-      }));
+      }
       const total = parseInt(data.totalResults, 10);
       totalPages = Math.ceil(total / 10);
       currentPage = page;
@@ -154,6 +155,7 @@ async function searchMovies(query, page = 1) {
   hideSpinner();
   isLoading = false;
 }
+
 
 
 
