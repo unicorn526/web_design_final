@@ -138,7 +138,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%; /* 讓它變成圓形 */
-  background-color: #f0f0f0;
+  background-color: #ffffff;
   border: 2px solid #0078D4; /* 藍色外框 */
   transition: background-color 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
   display: flex;
@@ -157,8 +157,8 @@
 .category-nav li a {
   text-decoration: none;
   color: #0078D4; /* 預設文字顏色 */
-  font-size: 14px; /* 文字大小 */
-  font-weight: bold;
+  font-size: 15px; /* 文字大小 */
+  font-weight: 450;
   display: block; /* 使文字變為塊級元素，便於控制 */
   white-space: nowrap; /* 防止文字換行 */
   transform: rotate(0deg); /* 保證文字保持水平方向 */
