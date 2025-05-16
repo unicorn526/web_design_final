@@ -26,7 +26,7 @@ const categories = {
     'Transformers', 'Transformers: Dark of the Moon', 'Bumblebee', 'The Bourne Identity', 'The Bourne Ultimatum'
   ],
   '動畫': [
-    'Spirited Away', 'Howl\'s Moving Castle', 'Princess Mononoke', 'My Neighbor Totoro',
+    'Spirited Away', 'Howl\'s Moving Castle', 'My Neighbor Totoro',
     'Kiki\'s Delivery Service', 'Ponyo', 'The Wind Rises', 'Weathering with You', 'The Tale of the Princess Kaguya',
     'Akira', 'Ghost in the Shell', 'Nausicaä of the Valley of the Wind', 'Grave of the Fireflies', 'Paprika',
     'The Garden of Words', '5 Centimeters per Second', 'Perfect Blue', 'Tokyo Godfathers',
