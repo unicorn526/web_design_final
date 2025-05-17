@@ -22,8 +22,18 @@
 
 
   <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="搜尋電影名稱，按 Enter 搜尋." />
+    <input type="text" id="searchInput" placeholder="🔍 搜尋電影名稱，按 Enter 搜尋." />
+    <div class="sort-bar">
+      <label for="sortSelect">排序：</label>
+      <select id="sortSelect">
+        <option value="" disabled selected>默認</option>
+        <option value="title">📁 片名</option>
+        <option value="rating">⭐ IMDb 評分</option>
+        <option value="year">📅 年份</option>
+      </select>
+    </div>
   </div>
+
 
   <div class="feed" id="feed"></div>
   <div id="spinner" class="spinner"></div>

@@ -30,7 +30,7 @@ const categories = {
     'Kiki\'s Delivery Service', 'Ponyo', 'The Wind Rises', 'Weathering with You', 'The Tale of the Princess Kaguya',
     'Akira', 'Ghost in the Shell', 'Nausicaä of the Valley of the Wind', 'Grave of the Fireflies', 'Paprika',
     'The Garden of Words', '5 Centimeters per Second', 'Perfect Blue', 'Tokyo Godfathers',
-    'The Boy and the Beast', 'Belle', 'Summer Wars', 'Wolf Children', 'The Girl Who Leapt Through Time',
+    'The Boy and the Beast', 'Summer Wars', 'Wolf Children', 'The Girl Who Leapt Through Time',
     'In This Corner of the World', 'Redline', 'The Secret World of Arrietty', 'When Marnie Was There', 'Big Hero 6',
     'Zootopia', 'Frozen', 'Frozen II', 'Encanto', 'Tangled', 'Moana', 'Raya and the Last Dragon', 'Luca', 'Turning Red',
     'Coco', 'Soul', 'Inside Out', 'Brave', 'Finding Nemo', 'Finding Dory', 'Wall-E', 'Up', 'Toy Story', 'Toy Story 2',
@@ -77,17 +77,15 @@ const categories = {
 const allMovies = [...new Set(Object.values(categories).flat())];
 
 
-const feedEl      = document.getElementById('feed');
-const spinnerEl   = document.getElementById('spinner');
+const feedEl = document.getElementById('feed');
+const spinnerEl = document.getElementById('spinner');
 const searchInput = document.getElementById('searchInput');
 
 let searchQuery = '';
 let currentPage = 1;
-let totalPages  = 1;
-let isLoading   = false;
-
-
-
+let totalPages = 1;
+let isLoading = false;
+let currentMovies = []; // 儲存目前類別的所有電影資料
 
 function resetSearch() {
   searchQuery = '';
@@ -101,36 +99,46 @@ function showSpinner() {
 }
 
 function hideSpinner() {
-  // 確保元素存在
   const spinner = document.getElementById('spinner');
   if (spinner) {
-    spinner.style.display = 'none';  // 隱藏 spinner
+    spinner.style.display = 'none';
   }
 }
 
-
+// 主要：渲染分類用，並儲存資料供排序
 async function renderCategory(cat) {
-  feedEl.innerHTML = ''; // 清空電影列表
-  showSpinner(); // 顯示載入中動畫
-  
-  // 確保每部電影都從 API 獲取並渲染
-  await Promise.all(categories[cat].map(title => fetchCategoryMovie(title, cat)));
-  
-  hideSpinner(); // 隱藏載入中動畫
+  feedEl.innerHTML = '';
+  showSpinner();
+  currentMovies = [];
+
+  const movieDataList = await Promise.all(
+    categories[cat].map(title => fetchMovieData(title))
+  );
+
+  currentMovies = movieDataList.filter(movie => movie);
+  renderMovies(currentMovies);
+  hideSpinner();
 }
 
-
-async function fetchCategoryMovie(title, category) {
+// 獲取電影資料但不渲染（提供排序使用）
+async function fetchMovieData(title) {
   try {
     const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&t=${encodeURIComponent(title)}&plot=short`);
     const data = await res.json();
-    if (data.Response === 'True') appendCard(data, category);  // 顯示電影卡片
+    return data.Response === 'True' ? data : null;
   } catch (e) {
     console.error(e);
+    return null;
   }
 }
 
+// 統一渲染所有卡片
+function renderMovies(movies) {
+  feedEl.innerHTML = '';
+  movies.forEach(data => appendCard(data));
+}
 
+// 搜尋
 async function searchMovies(query, page = 1) {
   if (isLoading) return;
   isLoading = true;
@@ -139,15 +147,25 @@ async function searchMovies(query, page = 1) {
     const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}&page=${page}`);
     const data = await res.json();
     if (data.Response === 'True') {
+      const resultArray = []; // 🔸補上宣告
+
       for (const item of data.Search.slice(0, 3)) {
-        await new Promise(resolve => setTimeout(resolve, 500)); // 每半秒請求一次
+        await new Promise(resolve => setTimeout(resolve, 500));
         const resDetail = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&i=${item.imdbID}&plot=short`);
         const detail = await resDetail.json();
-        if (detail.Response === 'True') appendCard(detail);
+        if (detail.Response === 'True') {
+          resultArray.push(detail); // 收集資料
+        }
       }
+
+      currentMovies = resultArray; // 儲存到全域變數
+      renderMovies(currentMovies); // 渲染畫面
+
       const total = parseInt(data.totalResults, 10);
       totalPages = Math.ceil(total / 10);
       currentPage = page;
+    } else {
+      feedEl.innerHTML = `<p style="color:red">${data.Error}</p>`;
     }
   } catch (e) {
     console.error(e);
@@ -157,8 +175,7 @@ async function searchMovies(query, page = 1) {
 }
 
 
-
-
+// 搜尋欄事件
 searchInput.addEventListener('keypress', e => {
   if (e.key === 'Enter') {
     const q = searchInput.value.trim();
@@ -170,7 +187,7 @@ searchInput.addEventListener('keypress', e => {
   }
 });
 
-
+// 滾動載入搜尋結果
 window.addEventListener('scroll', () => {
   if (searchQuery && !isLoading && currentPage < totalPages) {
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
@@ -180,6 +197,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
+// 隨機推薦（首頁）
 function renderHome() {
   feedEl.innerHTML = '';
   const randomCount = 30;
@@ -189,27 +207,23 @@ function renderHome() {
   Promise.all(selected.map(title => fetchCategoryMovie(title, '推薦電影'))).then(hideSpinner);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('searchInput');
-  input.addEventListener('keypress', e => {
-    if (e.key === 'Enter') {
-      const q = input.value.trim();
-      if (!q) return;
-      console.log('搜尋:', q);
-      searchMovies(q);  // 確保 searchMovies 有正確實作
-    }
-  });
+// fetchCategoryMovie 支援首頁快速渲染
+async function fetchCategoryMovie(title, category) {
+  try {
+    const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&t=${encodeURIComponent(title)}&plot=short`);
+    const data = await res.json();
+    if (data.Response === 'True') appendCard(data, category);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// 詳細卡片關閉
+document.getElementById('closeDetail').addEventListener('click', function () {
+  document.getElementById('movieDetail').style.display = 'none';
 });
 
-
-
-// 當前的卡片點擊事件
-// 關閉彈出框的邏輯
-document.getElementById('closeDetail').addEventListener('click', function() {
-  document.getElementById('movieDetail').style.display = 'none'; // 隱藏詳細卡片
-});
-
-// 顯示電影詳細信息
+// 顯示詳細資料
 function showMovieDetail(title, plot, posterUrl, director, actors, rating) {
   document.getElementById('movieDetail').style.display = 'flex';
   document.getElementById('detailTitle').innerText = title;
@@ -220,8 +234,7 @@ function showMovieDetail(title, plot, posterUrl, director, actors, rating) {
   document.getElementById('detailRating').innerText = `⭐ IMDb 評分: ${rating ?? 'N/A'}`;
 }
 
-
-// 創建電影卡片並綁定點擊事件
+// 渲染卡片並綁定點擊事件
 function appendCard(data, category = '') {
   const card = document.createElement('div');
   card.className = 'movie-card';
@@ -235,11 +248,41 @@ function appendCard(data, category = '') {
       <div class="plot">${data.Plot && data.Plot !== 'N/A' ? data.Plot : '（無電影簡介）'}</div>
     </div>
   `;
-
   card.addEventListener('click', () => {
     showMovieDetail(data.Title, data.Plot, data.Poster, data.Director, data.Actors, data.imdbRating);
   });
-
-  document.getElementById('feed').appendChild(card);
+  feedEl.appendChild(card);
 }
+
+// 新增排序選單邏輯
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('searchInput');
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+      const q = input.value.trim();
+      if (!q) return;
+      console.log('搜尋:', q);
+      searchMovies(q);
+    }
+  });
+
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      const sortValue = sortSelect.value;
+      const sorted = [...currentMovies]; // 確保 currentMovies 是一個已渲染過的電影陣列
+
+      if (sortValue === 'title') {
+        sorted.sort((a, b) => a.Title.localeCompare(b.Title));
+      } else if (sortValue === 'rating') {
+        sorted.sort((a, b) => parseFloat(b.imdbRating || 0) - parseFloat(a.imdbRating || 0));
+      } else if (sortValue === 'year') {
+        sorted.sort((a, b) => parseInt(b.Year || 0) - parseInt(a.Year || 0)); // 最新在前
+      }
+
+      renderMovies(sorted); // 重新渲染畫面
+    });
+  }
+});
+
 
